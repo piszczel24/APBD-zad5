@@ -1,11 +1,16 @@
-using Microsoft.AspNetCore.Http;
+using APBDZad5.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace APBDZad5.Controllers
+namespace APBDZad5.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class AnimalsController(IAnimalsService animalsService) : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AnimalsController : ControllerBase
+    [HttpGet]
+    public IActionResult GetAnimals(string orderBy = "name")
     {
+        var animals = animalsService.GetAnimals(orderBy);
+        return Ok(animals);
     }
 }
