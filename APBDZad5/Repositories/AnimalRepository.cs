@@ -20,10 +20,13 @@ public class AnimalRepository : IAnimalsRepository
             ["area"] = "Area"
         };
 
+        if (!columns.TryGetValue(orderBy, out var value))
+            throw new ArgumentException($"Niepoprawna warotość parametru orderBy: {orderBy}");
+
         var query =
             "select IdAnimal, Name, Description, Category, Area " +
             "from Animal " +
-            $"order by {columns[orderBy]} asc";
+            $"order by {value} asc";
 
         using var cmd = new SqlCommand(query, con);
         var reader = cmd.ExecuteReader();
@@ -43,5 +46,72 @@ public class AnimalRepository : IAnimalsRepository
         }
 
         return animals;
+    }
+
+    public int CreateAnimal(Animal animal)
+    {
+        ArgumentNullException.ThrowIfNull(animal);
+
+        if (string.IsNullOrEmpty(animal.Name) || string.IsNullOrEmpty(animal.Description) ||
+            string.IsNullOrEmpty(animal.Category) || string.IsNullOrEmpty(animal.Area))
+            throw new ArgumentException("Atrybuty Name, Category oraz Area nie mogą być ani puste, ani być nullem");
+
+        using var con = new SqlConnection(ConnectionString);
+        con.Open();
+
+        const string query = "insert into Animal (IdAnimal, Name, Description, Category, Area) " +
+                             "values (@IdAnimal, @Name, @Description, @Category, @Area)";
+        using var cmd = new SqlCommand(query, con);
+        cmd.Parameters.AddWithValue("@IdAnimal", animal.IdAnimal);
+        cmd.Parameters.AddWithValue("@Name", animal.Name);
+        cmd.Parameters.AddWithValue("@Description", animal.Description);
+        cmd.Parameters.AddWithValue("@Category", animal.Category);
+        cmd.Parameters.AddWithValue("@Area", animal.Area);
+
+        var affectedRowsCout = cmd.ExecuteNonQuery();
+        return affectedRowsCout;
+    }
+
+    public int UpdateAnimal(int id, Animal animal)
+    {
+        ArgumentNullException.ThrowIfNull(animal);
+
+        if (string.IsNullOrEmpty(animal.Name) || string.IsNullOrEmpty(animal.Description) ||
+            string.IsNullOrEmpty(animal.Category) || string.IsNullOrEmpty(animal.Area))
+            throw new ArgumentException("Atrybuty Name, Category oraz Area nie mogą być ani puste, ani być nullem");
+
+        using var con = new SqlConnection(ConnectionString);
+        con.Open();
+
+        const string query =
+            "update Animal " +
+            "set Name = @Name, Description = @Description, Category = @Category, Area = @Area " +
+            "where IdAnimal = @IdAnimal";
+
+        using var cmd = new SqlCommand(query, con);
+        cmd.Parameters.AddWithValue("@Name", animal.Name);
+        cmd.Parameters.AddWithValue("@Description", animal.Description);
+        cmd.Parameters.AddWithValue("@Category", animal.Category);
+        cmd.Parameters.AddWithValue("@Area", animal.Area);
+        cmd.Parameters.AddWithValue("@IdAnimal", id);
+
+        var affectedRowsCout = cmd.ExecuteNonQuery();
+        return affectedRowsCout;
+    }
+
+    public int DeleteAnimal(int id)
+    {
+        using var con = new SqlConnection(ConnectionString);
+        con.Open();
+
+        const string query =
+            "delete from Animal " +
+            "where IdAnimal = @IdAnimal";
+
+        using var cmd = new SqlCommand(query, con);
+        cmd.Parameters.AddWithValue("@IdAnimal", id);
+
+        var affectedRowsCount = cmd.ExecuteNonQuery();
+        return affectedRowsCount;
     }
 }
